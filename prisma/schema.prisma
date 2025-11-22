@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  LIBRARIAN
+  MEMBER
+  GUEST
+}
+
+enum BorrowStatus {
+  BORROWED
+  RETURNED
+  OVERDUE
+  CANCELLED
+}
+
+enum ReservationStatus {
+  ACTIVE
+  FULFILLED
+  CANCELLED
+}
+
+model User {
+  id         String    @id @default(uuid())
+  email      String    @unique
+  name       String?
+  avatar     String?
+  role       Role      @default(MEMBER)
+  password   String?
+  googleId   String?   @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  borrows    Borrow[]
+  reviews    Review[]
+  reservations Reservation[]
+  sessions   Session[] @relation("_SessionUser")
+  apiKeys    APIKey[]
+  auditLogs  AuditLog[]
+}
+
+model Book {
+  id              String    @id @default(uuid())
+  title           String
+  subtitle        String?
+  authors         String[]
+  description     String?
+  isbn            String?   @unique
+  publisher       String?
+  publishedAt     DateTime?
+  genres          String[]
+  coverUrl        String?
+  copiesTotal     Int       @default(1)
+  copiesAvailable Int       @default(1)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  borrows         Borrow[]
+  reviews         Review[]
+  reservations    Reservation[]
+  isDeleted       Boolean   @default(false)
+}
+
+model Borrow {
+  id         String       @id @default(uuid())
+  user       User         @relation(fields: [userId], references: [id])
+  userId     String
+  book       Book         @relation(fields: [bookId], references: [id])
+  bookId     String
+  startedAt  DateTime     @default(now())
+  dueAt      DateTime
+  returnedAt DateTime?
+  status     BorrowStatus @default(BORROWED)
+  fineCents  Int          @default(0)
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  book      Book     @relation(fields: [bookId], references: [id])
+  bookId    String
+  rating    Int
+  content   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Reservation {
+  id        String             @id @default(uuid())
+  user      User               @relation(fields: [userId], references: [id])
+  userId    String
+  book      Book               @relation(fields: [bookId], references: [id])
+  bookId    String
+  createdAt DateTime           @default(now())
+  status    ReservationStatus  @default(ACTIVE)
+  position  Int                @default(0)
+}
+
+model APIKey {
+  id         String   @id @default(uuid())
+  key        String   @unique
+  name       String
+  owner      User?    @relation(fields: [ownerId], references: [id])
+  ownerId    String?
+  quotaDaily Int      @default(1000)
+  createdAt  DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  data      Json?
+  createdAt DateTime @default(now())
+}
+
+// NextAuth session model for DB sessions
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(name: "_SessionUser", fields: [userId], references: [id])
+  expires      DateTime
+}

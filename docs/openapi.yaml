@@ -1,0 +1,240 @@
+openapi: 3.0.3
+info:
+  title: BookItzzz API
+  version: 1.0.0
+  description: Modern library management REST API
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  uptime:
+                    type: number
+  /books:
+    get:
+      summary: List books
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: genre
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Book'
+                  meta:
+                    type: object
+    post:
+      summary: Create book
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Book'
+      responses:
+        '201':
+          description: Created
+  /books/{id}:
+    get:
+      summary: Get book detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+    put:
+      summary: Update book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+    delete:
+      summary: Delete book (soft delete)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+  /borrows:
+    get:
+      summary: List borrows
+      responses:
+        '200':
+          description: Success
+    post:
+      summary: Create borrow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                bookId:
+                  type: string
+      responses:
+        '201':
+          description: Created
+  /borrows/{id}/return:
+    post:
+      summary: Return borrowed book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+  /reservations:
+    post:
+      summary: Create reservation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                bookId:
+                  type: string
+      responses:
+        '201':
+          description: Created
+  /books/{id}/reviews:
+    get:
+      summary: List reviews for book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+    post:
+      summary: Add review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                rating:
+                  type: integer
+                content:
+                  type: string
+      responses:
+        '201':
+          description: Created
+  /admin/stats:
+    get:
+      summary: Admin dashboard stats
+      responses:
+        '200':
+          description: Success
+  /uploads/imagekit:
+    post:
+      summary: Get ImageKit signed parameters
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fileName:
+                  type: string
+      responses:
+        '200':
+          description: Success
+components:
+  schemas:
+    Book:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+        authors:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        isbn:
+          type: string
+        publisher:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        genres:
+          type: array
+          items:
+            type: string
+        coverUrl:
+          type: string
+        copiesTotal:
+          type: integer
+        copiesAvailable:
+          type: integer
