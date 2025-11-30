@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Button } from '../../../components/Button';
 
 interface Stats {
@@ -10,14 +11,19 @@ interface Stats {
   totalUsers: number;
 }
 
+// Demo data for when database is not available
+const DEMO_STATS: Stats = {
+  totalBooks: 1250,
+  activeBorrows: 89,
+  overdueCount: 12,
+  totalUsers: 456
+};
+
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<Stats>({
-    totalBooks: 0,
-    activeBorrows: 0,
-    overdueCount: 0,
-    totalUsers: 0
-  });
+  const [stats, setStats] = useState<Stats>(DEMO_STATS);
   const [loading, setLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStats();
@@ -29,25 +35,64 @@ export default function AdminDashboardPage() {
       if (res.ok) {
         const data = await res.json();
         setStats(data);
+        setIsDemo(false);
+      } else {
+        // Use demo data if API fails
+        setStats(DEMO_STATS);
+        setIsDemo(true);
       }
     } catch (err) {
       console.error('Failed to fetch stats:', err);
+      setStats(DEMO_STATS);
+      setIsDemo(true);
+      setError('Using demo data - database not connected');
     } finally {
       setLoading(false);
     }
   }
 
   if (loading) {
-    return <div className="animate-pulse">Loading dashboard...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="h-10 bg-gray-200 rounded w-64 animate-pulse"></div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-lg shadow-lg p-6 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-24 mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded w-16"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
     <div>
+      {isDemo && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                <strong>Demo Mode:</strong> Showing sample data. Connect to the database to see real statistics.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Button variant="primary" onClick={() => window.location.href = '/admin/books/new'}>
-          Add New Book
-        </Button>
+        <Link href="/admin/books/new">
+          <Button variant="primary">
+            Add New Book
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Cards */}
@@ -75,27 +120,26 @@ export default function AdminDashboardPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="font-semibold mb-4">Quick Actions</h3>
           <div className="space-y-2">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => window.location.href = '/admin/books'}
-            >
-              Manage Books
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => window.location.href = '/admin/borrows'}
-            >
-              View All Borrows
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => window.location.href = '/admin/users'}
-            >
-              Manage Users
-            </Button>
+            <Link href="/books" className="block">
+              <Button variant="outline" className="w-full">
+                Browse All Books
+              </Button>
+            </Link>
+            <Link href="/admin/books" className="block">
+              <Button variant="outline" className="w-full">
+                Manage Books
+              </Button>
+            </Link>
+            <Link href="/admin/borrows" className="block">
+              <Button variant="outline" className="w-full">
+                View All Borrows
+              </Button>
+            </Link>
+            <Link href="/admin/users" className="block">
+              <Button variant="outline" className="w-full">
+                Manage Users
+              </Button>
+            </Link>
           </div>
         </div>
 
